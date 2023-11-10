@@ -1,0 +1,5 @@
+langchain
+pickle5
+streamlit_chat
+streamlit
+python-dotenv
