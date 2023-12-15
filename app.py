@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_chat import message
 from langchain.chains import ConversationalRetrievalChain
+from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.llms import CTransformers
 from langchain.llms import Replicate
@@ -13,15 +14,91 @@ from langchain.document_loaders import Docx2txtLoader
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import os
 from dotenv import load_dotenv
+from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain.llms import OpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain import PromptTemplate
 from langchain import PromptTemplate
 import pickle
-
+import pyrebase
 load_dotenv()
 
 
+firebaseConfig = {
+  'apiKey': "AIzaSyCzIdsHrH7EyfXJMTKocQMbs1L8HIFFOHg",
+  'authDomain': "anuraggpt-71892.firebaseapp.com",
+  'projectId': "anuraggpt-71892",
+  'storageBucket': "anuraggpt-71892.appspot.com",
+  'messagingSenderId': "59624845686",
+  'appId': "1:59624845686:web:453ab7012ed6f53cd6ca57",
+  'measurementId': "G-BW3RHXWYZC",
+  "databaseURL":'https://anuraggpt-71892-default-rtdb.firebaseio.com/'
+}
+
+
+# Initialize Firebase
+firebase = pyrebase.initialize_app(firebaseConfig)
+auth = firebase.auth()
+db = firebase.database()
+
+def loginn():
+    placeholder = st.empty()
+    placeholder0 = st.empty()
+    placeholder1 = st.empty()
+    placeholder2 = st.empty()
+    placeholder3 = st.empty()
+    placeholder4 = st.empty()
+    placeholder5 = st.empty()
+    placeholder6 = st.empty()
+    placeholder7 = st.empty()
+    placeholder.title("AnuragGPT :books:")
+    choice = placeholder1.selectbox('Login / Signup', ['Login', 'Sign up'])
+
+    if choice == 'Login':
+        # Login form
+        email = placeholder2.text_input('Email', placeholder='Enter your email')
+        password = placeholder3.text_input('Password', type='password', placeholder='Enter your password')
+
+        if placeholder4.checkbox('Login'):
+            try:
+                # Login user
+                user = auth.sign_in_with_email_and_password(email, password)
+                print(user)
+                placeholder5.success(user['displayName'])
+                
+
+              
+
+                # Display success message
+                placeholder6.success('Logged in successfully!')
+                placeholder.empty()
+                placeholder1.empty()
+                placeholder2.empty()
+                placeholder3.empty()
+                placeholder4.empty()
+                placeholder5.empty()
+                placeholder6.empty()
+                return True
+            except Exception as e:
+                st.error(e)
+    elif choice == 'Sign up':
+    # Signup form
+        email = st.text_input('Email', placeholder='Enter your email')
+        password = st.text_input('Password', type='password', placeholder='Enter your password')
+        username = st.text_input('Username', placeholder='Enter your username')
+
+        if st.button('Sign Up'):
+            try:
+                # Create user
+                user = auth.create_user_with_email_and_password(email, password)
+                st.success(user)
+                data = {"name":username,"email":email,'username':username,'data':'','lastlogin':[]}
+                data['lastlogin'].append(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                db.child("users").child(user['localId']).set(data)
+                # Display success message
+                st.success('Account created successfully! Please check your email for the verification link.')
+            except Exception as e:
+                st.error(e)
 
 system_prompt = "You are an friendly ai assistant that help users find the most relevant and accurate answers to their questions based on the documents you have access to. When answering the questions, mostly rely on the info in documents."
 
@@ -115,50 +192,20 @@ def main():
     # st.sidebar.title("Document Processing")
     # uploaded_files = st.sidebar.file_uploader("Upload files", accept_multiple_files=True)
 
-    if os.path.exists('traningdata.pkl'):
-        with open(f"traningdata.pkl", "rb") as f:
-            VectorStore = pickle.load(f)
-        chain = create_conversational_chain(VectorStore)
+    if True:
+        # with open(f"traningdata.pkl", "rb") as f:
+        #     VectorStore = pickle.load(f)
+        embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
-        
+        db3 = Chroma(persist_directory="./anuragweb", embedding_function=embedding_function)
+
+        chain = create_conversational_chain(db3)
+
+
         display_chat_history(chain)
 
-    # elif uploaded_files:
-    #     text = []
-    #     for file in uploaded_files:
-    #         file_extension = os.path.splitext(file.name)[1]
-    #         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-    #             temp_file.write(file.read())
-    #             temp_file_path = temp_file.name
-
-    #         loader = None
-    #         if file_extension == ".pdf":
-    #             loader = PyPDFLoader(temp_file_path)
-    #         elif file_extension == ".docx" or file_extension == ".doc":
-    #             loader = Docx2txtLoader(temp_file_path)
-    #         elif file_extension == ".txt":
-    #             loader = TextLoader(temp_file_path)
-
-    #         if loader:
-    #             text.extend(loader.load())
-    #             os.remove(temp_file_path)
-
-    #     text_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=100, length_function=len)
-    #     text_chunks = text_splitter.split_documents(text)
-
-    #     # Create embeddings
-    #     embeddings = OpenAIEmbeddings()
-    #     # embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2", 
-    #     #                                    model_kwargs={'device': 'cpu'})
-
-    #     # Create vector store
-    #     vector_store = FAISS.from_documents(text_chunks, embedding=embeddings)
-
-    #     # Create the chain object
-    #     chain = create_conversational_chain(vector_store)
-
-        
-    #     display_chat_history(chain)
 
 if __name__ == "__main__":
-    main()
+    sc = loginn()
+    if sc:
+        main()

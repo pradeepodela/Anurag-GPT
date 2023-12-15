@@ -1,8 +1,8 @@
-import streamlit as st
+# import streamlit as st
 from dotenv import load_dotenv
 import pickle
-from PyPDF2 import PdfReader
-from streamlit_extras.add_vertical_space import add_vertical_space
+# from PyPDF2 import PdfReader
+# from streamlit_extras.add_vertical_space import add_vertical_space
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
@@ -10,79 +10,53 @@ from langchain.llms import OpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.callbacks import get_openai_callback
 import os
+from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain.document_loaders import PyPDFDirectoryLoader
+import os
+import json
+
+from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+
+import openai
 
 
+openai.api_type = "open_ai"
+openai.api_base = "http://localhost:1234/v1"
+openai.api_key = "NULL"
 load_dotenv()
+embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
-traningfolder = 'traning/'
+traningfolder = 'training/'
 pdfs = []
 text_files = []
 
-def get_pdf_text(pdf_docs):
-    text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(f'{traningfolder}/{pdf}')
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text
+train = input('Start to train..yes/no')
+# if train == 'yes':
+#     name = input('Enter your DB name ...')
 
-def get_text_from_text_file(text_file):
-  """Extracts the text from a text file.
 
-  Args:
-    text_file: The path to the text file.
+    # load the document and split it into chunks
+    loader = PyPDFDirectoryLoader(traningfolder)
+    documents = loader.load()
+    #
+    # # split it into chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
+    docs = text_splitter.split_documents(documents)
 
-  Returns:
-    A string containing the text of the text file.
-  """
+    # create the open-source embedding function
 
-  text = ""
-  with open(text_file, "r") as f:
-    for line in f:
-      text += line
-  return text
 
-def text_chunks(text, text_files=[]):
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len
-        )
+    ## saving the db
+    db = Chroma.from_documents(docs, embedding_function, persist_directory=name)
+    query = "who is naval"
+    docs = db.similarity_search(query)
+    print(docs[0].page_content)
 
-    chunks = text_splitter.split_text(text=text)
-
-    for text_file in text_files:
-        text = get_text_from_text_file(text_file)
-        chunks += text_splitter.split_text(text=text)
-
-    if not os.path.exists('traningdata.pkl'):
-        embeddings = OpenAIEmbeddings()
-        VectorStore = FAISS.from_texts(chunks, embedding=embeddings)
-        with open(f"traningdata.pkl", "wb") as f:
-            pickle.dump(VectorStore, f)
-    return chunks
-
-if not os.path.exists('traningdata.pkl'):
-    folder = os.listdir(traningfolder)
-    if len(folder) > 0:
-        text = get_pdf_text(folder)
-        _=text_chunks(text, text_files=text_files)
-
-def main():
-
-    if os.path.exists('traningdata.pkl'):
-        with open(f"traningdata.pkl", "rb") as f:
-            VectorStore = pickle.load(f)
-    st.header('chatpdf')
-
-    inp = st.text_input('enter the query')
-    if inp :
-        docs = VectorStore.similarity_search(query=inp, k=3)
-
-        llm = OpenAI()
-        chain = load_qa_chain(llm=llm, chain_type="stuff")
-        with get_openai_callback() as cb:
-            response = chain.run(input_documents=docs, question=inp)
-        st.write(response)
-
-main()
+# # save to disk
+db3 = Chroma(persist_directory="./anuragai", embedding_function=embedding_function)
+db3.get()
+query = "what is linked list"
+docs = db3.similarity_search(query)
+print(docs[0].page_content)
