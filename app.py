@@ -127,10 +127,6 @@ def initialize_session_state():
         st.session_state['past'] = ["Hey! 👋"]
 
 def conversation_chat(query, chain, history):
-    print("Query:", query)
-    # print("History:", history)
-    # print('chain', chain)
-
     result = chain({"question": query, "chat_history": history})
     prompt = PromptTemplate.from_template(template=query_wrapper_prompt)
     print("Answer:", result["answer"])
@@ -188,13 +184,9 @@ def main():
     # Initialize session state
     initialize_session_state()
     st.title("AnuragGPT :books:")
-    # Initialize Streamlit
-    # st.sidebar.title("Document Processing")
-    # uploaded_files = st.sidebar.file_uploader("Upload files", accept_multiple_files=True)
 
     if True:
-        # with open(f"traningdata.pkl", "rb") as f:
-        #     VectorStore = pickle.load(f)
+
         embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
         db3 = Chroma(persist_directory="./anuragweb", embedding_function=embedding_function)
