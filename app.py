@@ -25,14 +25,14 @@ load_dotenv()
 
 
 firebaseConfig = {
-  'apiKey': "AIzaSyCzIdsHrH7EyfXJMTKocQMbs1L8HIFFOHg",
-  'authDomain': "anuraggpt-71892.firebaseapp.com",
-  'projectId': "anuraggpt-71892",
-  'storageBucket': "anuraggpt-71892.appspot.com",
-  'messagingSenderId': "59624845686",
-  'appId': "1:59624845686:web:453ab7012ed6f53cd6ca57",
-  'measurementId': "G-BW3RHXWYZC",
-  "databaseURL":'https://anuraggpt-71892-default-rtdb.firebaseio.com/'
+  'apiKey': "",
+  'authDomain': "",
+  'projectId': "",
+  'storageBucket': "",
+  'messagingSenderId': "",
+  'appId': "",
+  'measurementId': "",
+  "databaseURL":''
 }
 
 
